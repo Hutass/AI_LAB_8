@@ -34,8 +34,8 @@ namespace AI_LAB_7
 
         Canvas canvas;
 
-        const int levelSize = 24;               // размер игрового поля
-        const int maxResources = 250;               // предельное число растений
+        const int levelSize = 20;               // размер игрового поля
+        const int maxResources = 150;               // предельное число растений
         const int maxAgents = 125;               // предельное число агентов
 
         const int enterAmount = 16;             // число входов
@@ -53,10 +53,10 @@ namespace AI_LAB_7
         const double MaxArea = 1000;
         const double MaxCost = 2500;
 
-        const double reproductionEnergy = 0.7;  // энергия репродукции
+        const double reproductionEnergy = 0.5;  // энергия репродукции
 
-        public double foodCost = MaxCost/maxResources;
-        public double foodArea = MaxArea/maxResources;
+        public double foodCost = MaxCost/maxResources*0.8;
+        public double foodArea = MaxArea/maxResources*1.4;
 
         public double widthOfCell;
         public double heightOfCell;
@@ -72,7 +72,7 @@ namespace AI_LAB_7
 
         Point[] north = { new Point(1, -2), new Point(-1, -2), new Point(0, -2), new Point(0, -1) };
         Point[] west = { new Point(-2, -1), new Point(-2, 1), new Point(-1, 0), new Point(-1, 0) };
-        Point[] close = { new Point(-1, 0), new Point(-1, 1), new Point(-1, -1), new Point(0, -1), new Point(0, 1), new Point(1, 0), new Point(1, 1), new Point(1, -1) };
+        Point[] close = { new Point(-1, 0), new Point(-1, 1), new Point(-1, -1), new Point(0, -1), new Point(0, 1), new Point(1, 0), new Point(1, 1), new Point(1, -1), new Point(0, 0) };
 
         int[] agentTypeCounts = { 0, 0 };         // количество агентов по типам
         int[] agentMaxAge = { 0, 0 };             // возраст агентов по типам
@@ -93,6 +93,23 @@ namespace AI_LAB_7
             Init();
             for (int age = 0; age < 600; age++)
             {     // главный цикл симуляции
+                for (int l = 1; l < 3; l++)                    // очистка карты
+                    for (int y = 0; y < levelSize; y++)
+                        for (int x = 0; x < levelSize; x++)
+                            map[l, x, y] = 0;
+
+                for (int p = 0; p < maxResources; p++)                 // посадка растений
+                {
+                    areas[p] = AddInEmptyCell(Level.Area);
+                    costs[p] = AddInEmptyCell(Level.Cost);
+                    if (canvas.Children.Contains(areaAgents[p].Visual))
+                        canvas.Children.Remove(areaAgents[p].Visual);
+                    areaAgents[p] = new Agent(canvas, widthOfCell, heightOfCell) { Visual = AreaPolyline, Location = areas[p] };
+                    if (canvas.Children.Contains(costAgents[p].Visual))
+                        canvas.Children.Remove(costAgents[p].Visual);
+                    costAgents[p] = new Agent(canvas, widthOfCell, heightOfCell) { Visual = CostPolyline, Location = costs[p] };
+                }
+
                 for (int t = (int)Level.Workbench; t <= (int)Level.Area; t++)
                     for (int i = 0; i < maxAgents; i++)
                         if ((int)agents[i].AgentType == t)
@@ -304,7 +321,7 @@ namespace AI_LAB_7
 
                     Point childrenPoint = map[0, Clip((int)(agent.Location.X + offset.X)), Clip((int)(agent.Location.Y + offset.Y))] == 0 ?
                         new Point(Clip((int)(agent.Location.X + offset.X)), Clip((int)(agent.Location.Y + offset.Y))) :
-                        map[0, Clip((int)(agent.Location.X + offset.X / 2)), Clip((int)(agent.Location.Y + offset.Y)) / 2] == 0 ?
+                        map[0, Clip((int)(agent.Location.X + offset.X / 2)), Clip((int)(agent.Location.Y + offset.Y / 2))] == 0 ?
                         new Point(Clip((int)(agent.Location.X + offset.X / 2)), Clip((int)(agent.Location.Y + offset.Y / 2))) : new Point(-1, -1);
 
                     if (childrenPoint.X < 0)
@@ -322,7 +339,7 @@ namespace AI_LAB_7
                         Inputs = agent.Inputs
                     };
                     
-                    if (random.NextDouble() <= 0.3)
+                    if (random.NextDouble() <= 0.4)
                     {
                         child.Weight[random.Next(enterAmount * exitAmount)] = random.Next(10) - 1;
                     }
@@ -391,9 +408,9 @@ namespace AI_LAB_7
                         //if (agent.Cost > ( agent.AgentType == AgentType.FirstWorkbench ? firstWorkbenchCost : secondWorkbenchCost ))
                         //    agent.Cost = agent.AgentType == AgentType.FirstWorkbench ? firstWorkbenchCost : secondWorkbenchCost;
                         map[(int)Level.Cost, oxC, oyC]--;
-                        costs[i] = AddInEmptyCell(Level.Cost);
+                        //costs[i] = AddInEmptyCell(Level.Cost);
                         canvas.Children.Remove(costAgents[i].Visual);
-                        costAgents[i] = new Agent(canvas, widthOfCell, heightOfCell) { Visual = CostPolyline, Location = costs[i] };
+                        //costAgents[i] = new Agent(canvas, widthOfCell, heightOfCell) { Visual = CostPolyline, Location = costs[i] };
                     }
 
                 }
@@ -412,9 +429,9 @@ namespace AI_LAB_7
                         //if (agent.Area > (agent.AgentType == AgentType.FirstWorkbench ? firstWorkbenchArea : secondWorkbenchArea))
                         //    agent.Area = agent.AgentType == AgentType.FirstWorkbench ? firstWorkbenchArea : secondWorkbenchArea;
                         map[(int)Level.Area, oxA, oyA]--;
-                        areas[i] = AddInEmptyCell(Level.Area);
+                        //areas[i] = AddInEmptyCell(Level.Area);
                         canvas.Children.Remove(areaAgents[i].Visual);
-                        areaAgents[i] = new Agent(canvas, widthOfCell, heightOfCell) { Visual = AreaPolyline, Location = areas[i] };
+                        //areaAgents[i] = new Agent(canvas, widthOfCell, heightOfCell) { Visual = AreaPolyline, Location = areas[i] };
                     }
 
                 }
@@ -459,10 +476,10 @@ namespace AI_LAB_7
             }
 
             // выполнение решения
-            switch((AgentAction)winner)
+            switch ((AgentAction)winner)
             {
                 case AgentAction.SpreadNorth:
-                    if(isFed) ReproduceAgent(agent, Direction.North);
+                    if (isFed) ReproduceAgent(agent, Direction.North);
                     break;
                 case AgentAction.SpreadWest:
                     if (isFed) ReproduceAgent(agent, Direction.West);
@@ -475,19 +492,28 @@ namespace AI_LAB_7
                     break;
                 case AgentAction.Eat:
                     Eat(agent);
+                    while (true)
+                    {
+                        if (random.NextDouble() <= 0.5)
+                        {
+                            Eat(agent);
+                        }
+                        else
+                            break;
+                    }
                     break;
             }
 
             // затраты энергии
             if (agent.AgentType == AgentType.FirstWorkbench)
             {
-                agent.Cost -= foodCost * 0.2 / firstWorkbenchPerformance * Math.Max(firstWorkbenchPerformance, secondWorkbenchPerformance);
-                agent.Area -= foodArea * 0.2 / firstWorkbenchPerformance * Math.Max(firstWorkbenchPerformance, secondWorkbenchPerformance);
+                agent.Cost -= firstWorkbenchCost * 0.2 / firstWorkbenchPerformance * Math.Max(firstWorkbenchPerformance, secondWorkbenchPerformance);
+                agent.Area -= firstWorkbenchArea * 0.2 / firstWorkbenchPerformance * Math.Max(firstWorkbenchPerformance, secondWorkbenchPerformance);
             }
             else
             {
-                agent.Cost -= foodCost * 0.2 / firstWorkbenchPerformance * Math.Max(firstWorkbenchPerformance, secondWorkbenchPerformance);
-                agent.Area -= foodArea * 0.2 / firstWorkbenchPerformance * Math.Max(firstWorkbenchPerformance, secondWorkbenchPerformance);
+                agent.Cost -= secondWorkbenchCost * 0.2 / secondWorkbenchPerformance * Math.Max(firstWorkbenchPerformance, secondWorkbenchPerformance);
+                agent.Area -= secondWorkbenchArea * 0.2 / secondWorkbenchPerformance * Math.Max(firstWorkbenchPerformance, secondWorkbenchPerformance);
             }
 
             if (agent.Cost <= 0 || agent.Area <=0)
